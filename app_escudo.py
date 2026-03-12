@@ -8,6 +8,7 @@ import tempfile
 import os
 from gtts import gTTS
 import base64
+import urllib.parse
 
 # --- CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(page_title="Kiosco Escudo Ciudadano", page_icon="🛡️", layout="centered")
@@ -154,8 +155,21 @@ if 'oficio' in st.session_state:
     reproducir_audio(st.session_state['resumen'])
     st.info(f"🔊 La computadora dice: *{st.session_state['resumen']}*")
     
-    word_bytes = crear_word(st.session_state['oficio'])
-    st.download_button("🖨️ DESCARGAR PARA IMPRIMIR", data=word_bytes, file_name="Documento_Ciudadano.docx", type="primary", use_container_width=True)
+    # --- ZONA DE BOTONES DE SALIDA ---
+    col_descarga, col_whats = st.columns(2)
+    
+    with col_descarga:
+        word_bytes = crear_word(st.session_state['oficio'])
+        st.download_button("🖨️ DESCARGAR EN WORD", data=word_bytes, file_name="Documento_Ciudadano.docx", type="primary", use_container_width=True)
+    
+    with col_whats:
+        # Preparamos el texto para que WhatsApp lo entienda
+        mensaje_amigable = f"Hola, necesito ayuda para imprimir este documento oficial:\n\n{st.session_state['oficio']}"
+        mensaje_codificado = urllib.parse.quote(mensaje_amigable)
+        link_whatsapp = f"https://api.whatsapp.com/send?text={mensaje_codificado}"
+        
+        # Botón que abre WhatsApp directamente
+        st.link_button("📲 ENVIAR POR WHATSAPP", url=link_whatsapp, use_container_width=True)
     
     with st.expander("👀 Ver el documento escrito"):
         st.text_area("Oficio:", value=st.session_state['oficio'], height=300)
@@ -163,3 +177,33 @@ if 'oficio' in st.session_state:
     if st.button("🗑️ EMPEZAR DE NUEVO", use_container_width=True):
         for key in list(st.session_state.keys()): del st.session_state[key]
         st.rerun()
+
+# --- 7. AVISOS LEGALES Y DE PRIVACIDAD ---
+st.write("---")
+st.markdown("<h5 style='text-align: center; color: #6c757d;'>Información Legal y Transparencia</h5>", unsafe_allow_html=True)
+
+with st.expander("⚖️ AVISO LEGAL Y LÍMITES DE RESPONSABILIDAD (LEER ANTES DE USAR)"):
+    st.markdown("""
+    **1. No es Asesoría Legal Humana:** "Escudo Ciudadano" es una herramienta tecnológica experimental impulsada por Inteligencia Artificial (IA). No sustituye el consejo, la representación, ni la revisión de un abogado titulado con Cédula Profesional.
+    
+    **2. Limitaciones de la Tecnología:** La Inteligencia Artificial puede cometer errores, citar artículos derogados, o interpretar incorrectamente el contexto o la traducción de lenguas originarias (alucinaciones de IA).
+    
+    **3. Responsabilidad del Usuario:** El documento generado es un "borrador" o "formato sugerido". Es responsabilidad absoluta y exclusiva del usuario o del asesor que lo acompaña leer, verificar, corregir y validar el contenido, los fundamentos legales y sus datos personales antes de firmarlo o presentarlo ante cualquier autoridad.
+    
+    **4. Deslinde de Responsabilidad:** El creador de este software y la plataforma de alojamiento no asumen ninguna responsabilidad legal, civil, penal o administrativa por el resultado de los trámites, rechazos de autoridades, daños, o perjuicios derivados del uso de los textos generados por este sistema.
+    """)
+
+with st.expander("🔒 AVISO DE PRIVACIDAD SIMPLIFICADO"):
+    st.markdown("""
+    De conformidad con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP), se informa lo siguiente:
+    
+    **1. Identidad del Responsable:** El proyecto independiente "Escudo Ciudadano" (desarrollado por Juan Manuel Villegas) es el responsable del tratamiento temporal de los datos recabados en este sitio.
+    
+    **2. Datos Recabados y Finalidad:** Los datos proporcionados mediante voz (audio) se utilizarán **exclusivamente** para redactar y estructurar el documento legal solicitado en tiempo real.
+    
+    **3. Almacenamiento y Borrado:** Esta plataforma NO almacena sus datos en bases de datos permanentes. La información y audios existen únicamente durante su sesión activa (memoria caché) y se eliminan irreversiblemente al presionar el botón "Empezar de Nuevo" o al cerrar el navegador.
+    
+    **4. Transferencia de Datos:** Para poder funcionar, los audios se procesan de manera cifrada a través de las interfaces de programación (APIs) de Google y Streamlit. Al usar esta plataforma, usted consiente este procesamiento automatizado de terceros para la generación de su documento.
+    """)
+
+st.caption("© 2026 Escudo Ciudadano v2.0 (Kiosco Parlante) | Desarrollado para el Acceso a la Justicia Social en México.")
